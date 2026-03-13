@@ -13,6 +13,7 @@ export class App implements OnInit {
     this.render();
   }
 
+  /* Piece constants */
   readonly PIECES = {
     wK:'♚', wQ:'♛', wR:'♜', wB:'♝', wN:'♞', wP:'♟',
     bK:'♔', bQ:'♕', bR:'♖', bB:'♗', bN:'♘', bP:'♙',
@@ -46,6 +47,7 @@ export class App implements OnInit {
 
   effect(fn: any) { fn(); }
 
+  /* Game State (Signals) */
   readonly board$      = this.signal([...this.INIT_BOARD]);
   readonly turn$       = this.signal('w');
   readonly selected$   = this.signal(null);
@@ -59,6 +61,7 @@ export class App implements OnInit {
   readonly castleRights$ = this.signal({ wK:true, wQ:true, bK:true, bQ:true });
   readonly enPassant$  = this.signal(null);
 
+  /* Chess Logic */
   color(p: any) { return p ? p[0] : null; }
   type(p: any) { return p ? p.slice(1) : null; }
   idx(r: any, c: any) { return r * 8 + c; }
@@ -99,6 +102,7 @@ export class App implements OnInit {
     else if(t === 'N') step([[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]);
     else if(t === 'K') {
       step([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1],[-1, -1]]);
+      // Castling
       const baseRow = c === 'w' ? 7 : 0;
       if(this.row(i) === baseRow && this.col(i) === 4) {
         if(castle[c + 'K'] && !board[this.idx(baseRow, 5)] && !board[this.idx(baseRow, 6)])
@@ -149,17 +153,21 @@ export class App implements OnInit {
       const p = nb[from];
       const t = this.type(p), c = this.color(p);
 
+      // En passant capture
       if(t === 'P' && to === ep && !nb[to]) {
         const capRow = c === 'w' ? this.row(to) + 1 : this.row(to) - 1;
         nb[this.idx(capRow, this.col(to))] = null;
       }
 
+      // Castling — check intermediate squares
       if(t === 'K') {
         const baseRow = c === 'w' ? 7 : 0;
         if(this.row(from) === baseRow && this.col(from) === 4 && Math.abs(this.col(to) - 4) === 2) {
+          // must not be in check, or pass through check
           if(this.isAttacked(from, c === 'w' ? 'b' : 'w', board)) return false;
           const midCol = this.col(to) === 6 ? 5 : 3;
           if(this.isAttacked(this.idx(baseRow,midCol), c === 'w' ? 'b' : 'w', board)) return false;
+          // move rook
           const rookFrom = this.col(to) === 6 ? this.idx(baseRow, 7) : this.idx(baseRow, 0);
           const rookTo = this.col(to) === 6 ? this.idx(baseRow, 5) : this.idx(baseRow, 3);
           nb[rookTo] = nb[rookFrom];
@@ -198,6 +206,7 @@ export class App implements OnInit {
     const castle = {...this.castleRights$()};
     let captured = board[to];
 
+    // En passant
     if(t === 'P' && to === ep && !board[to]) {
       const capRow = c === 'w' ? this.row(to) + 1 : this.row(to) - 1;
       const capIdx = this.idx(capRow, this.col(to));
@@ -205,6 +214,7 @@ export class App implements OnInit {
       board[capIdx] = null;
     }
 
+    // Castling — move rook
     if(t === 'K' && Math.abs(this.col(to) - this.col(from)) === 2) {
       const baseRow = c === 'w' ? 7 : 0;
       const rookFrom = this.col(to) === 6 ? this.idx(baseRow, 7) : this.idx(baseRow, 0);
@@ -213,9 +223,11 @@ export class App implements OnInit {
       board[rookFrom] = null;
     }
 
+    // Move piece
     board[to] = promoType ? c + promoType : board[from];
     board[from] = null;
 
+    // Update castle rights
     if(t === 'K') { castle[c + 'K'] = false; castle[c + 'Q'] = false; }
     if(t === 'R') {
       if(from === this.idx(7, 0)) castle['wQ'] = false;
@@ -224,6 +236,7 @@ export class App implements OnInit {
       if(from === this.idx(0,7)) castle['bK'] = false;
     }
 
+    // En passant target
     let newEp = null;
     if(t === 'P' && Math.abs(this.row(to) - this.row(from)) === 2) {
       newEp = this.idx((this.row(from) + this.row(to)) / 2, this.col(from));
@@ -232,10 +245,12 @@ export class App implements OnInit {
     return { board, captured, castle, newEp };
   }
 
+  /* Algebraic move notation */
   moveToSan(from: any, to: any, board: any, promoType: any) {
     return this.toAlgebraic(from, to, board, promoType);
   }
 
+  /* UI rendering */
   renderBoard() {
     const boardEl = document.getElementById('board');
     const board = this.board$();
@@ -246,6 +261,7 @@ export class App implements OnInit {
     const turn = this.turn$();
     const opp = turn==='w' ? 'b' : 'w';
 
+    // Find kings in check
     let checkIdx = -1;
     if(status === 'check' || status === 'checkmate') {
       checkIdx = this.findKing(board, turn);
@@ -301,6 +317,7 @@ export class App implements OnInit {
     this.renderBoard();
   }
 
+  /* Interaction */
   pendingPromo: any;
 
   onSquareClick(i: any) {
@@ -313,6 +330,7 @@ export class App implements OnInit {
     const legal = this.legalMoves$();
 
     if(sel !== null && legal.includes(i)) {
+      // Execute move
       this.doMove(sel, i, null);
       return;
     }
@@ -334,12 +352,14 @@ export class App implements OnInit {
     const p = board[from];
     const t = this.type(p);
 
+    // Pawn promotion
     if(t === 'P' && (this.row(to) === 0 || this.row(to) === 7) && !promoType) {
       this.pendingPromo = {from, to};
       this.showPromoModal(turn);
       return;
     }
 
+    // Save history for undo
     this.boardHistory$.update((h: any) => [...h, {
       board:[...board],
       turn,
@@ -365,6 +385,7 @@ export class App implements OnInit {
       else this.capturedB$.update((c: any) => [...c, captured]);
     }
 
+    // Record move
     const hist = this.moveHistory$();
     if(turn === 'w') {
       this.moveHistory$.update((h: any)=>[...h, {w:san, b:''}]);
@@ -382,6 +403,7 @@ export class App implements OnInit {
     this.selected$.set(null);
     this.legalMoves$.set([]);
 
+    // Check game status
     const nextLegal=this.getAllLegalMoves(nb, next, newEp, castle);
     const nextKing=this.findKing(nb, next);
     const inCheck=this.isAttacked(nextKing, turn, nb);
