@@ -70,7 +70,6 @@ export class App implements OnInit {
     const c = this.color(p), t = this.type(p);
     const moves = [];
     const opp = c === 'w' ? 'b' : 'w';
-
     const slide = (dirs: any) => {
       for (const [dr,dc] of dirs) {
         let r = this.row(i) + dr, col_ = this.col(i) + dc;
@@ -261,7 +260,6 @@ export class App implements OnInit {
       const canMove = legal.includes(i);
       const isLastMove = lm && (lm.from === i || lm.to === i);
       const isCheck = i === checkIdx;
-
       const sq = document.createElement('div');
       sq.className = 'sq' + (isLight ? ' light' : ' dark')
         + (isSel ? ' selected' : '')
@@ -369,13 +367,13 @@ export class App implements OnInit {
 
     const hist = this.moveHistory$();
     if(turn === 'w') {
-      this.moveHistory$.update((h: any) => [...h, {w:san, b:''}]);
+      this.moveHistory$.update((h: any)=>[...h, {w:san, b:''}]);
     } else {
-      const last=hist[hist.length - 1];
-      if(last && !last.b) {
-        this.moveHistory$.update((h: string | any[]) => [...h.slice(0, -1), {w:last.w, b:san}]);
+      const last=hist[hist.length-1];
+      if(last &&! last.b) {
+        this.moveHistory$.update((h: string | any[])=>[...h.slice(0,-1), {w:last.w, b:san}]);
       } else {
-        this.moveHistory$.update((h: any) => [...h, {w:'', b:san}]);
+        this.moveHistory$.update((h: any)=>[...h, {w:'', b:san}]);
       }
     }
 
@@ -412,7 +410,7 @@ export class App implements OnInit {
     const modal = document.getElementById('promoModal');
     const piecesEl = document.getElementById('promoPieces');
     if (piecesEl) piecesEl.innerHTML = '';
-    const types = ['Q','R','B','N'];
+    const types = ['Q', 'R', 'B', 'N'];
     types.forEach(t => {
       const btn = document.createElement('button');
       btn.className = 'promo-btn';
@@ -424,6 +422,6 @@ export class App implements OnInit {
   }
 
   hidePromoModal() {
-    document.getElementById('promoModal')!.style.display='none';
+    document.getElementById('promoModal')!.style.display = 'none';
   }
 }
