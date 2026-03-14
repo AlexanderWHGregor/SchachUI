@@ -13,6 +13,7 @@
 </header>
 
 <div class="app">
+  <!-- Board -->
   <div class="board-wrap">
     <div style="display:flex; align-items:center;">
       <div class="rank-labels" id="rankLabels"></div>
@@ -23,7 +24,9 @@
     <div class="file-labels" id="fileLabels"></div>
   </div>
 
+  <!-- Side panel -->
   <div class="panel">
+    <!-- Status -->
     <div class="card" id="statusCard">
       <div class="card-title">Turn</div>
       <div class="status-indicator">
@@ -37,6 +40,7 @@
       <div class="game-over-msg" id="gameOverMsg" style="display:none"></div>
     </div>
 
+    <!-- Captured -->
     <div class="card">
       <div class="card-title">Captured by White</div>
       <div class="captured-row" id="capturedByWhite"></div>
@@ -46,6 +50,7 @@
       <div class="captured-row" id="capturedByBlack"></div>
     </div>
 
+    <!-- Moves -->
     <div class="card">
       <div class="card-title">Move History</div>
       <div class="move-history" id="moveHistory"></div>
@@ -53,6 +58,7 @@
   </div>
 </div>
 
+<!-- Promotion modal -->
 <div class="modal-overlay" id="promoModal" style="display:none">
   <div class="modal">
     <h3>Choose Promotion</h3>
