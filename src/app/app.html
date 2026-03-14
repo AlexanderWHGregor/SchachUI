@@ -56,6 +56,15 @@
       <div class="card-title">Move History</div>
       <div class="move-history" id="moveHistory"></div>
     </div>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="card-title">Controls</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn" (click)="undoMove()">↩ Undo Move</button>
+        <button class="btn primary" (click)="newGame()">✦ New Game</button>
+      </div>
+    </div>
   </div>
 </div>
 
