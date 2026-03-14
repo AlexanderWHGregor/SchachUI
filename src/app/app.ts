@@ -313,8 +313,51 @@ export class App implements OnInit {
     });
   }
 
+  renderStatus() {
+    const status = this.status$();
+    const turn = this.turn$();
+    const dotW = document.getElementById('dotW');
+    const dotB = document.getElementById('dotB');
+    const gameOverMsg = document.getElementById('gameOverMsg');
+
+    if (dotW) dotW.className = 'dot white' + (turn === 'w' && status === 'playing' || status === 'check' && turn === 'w' ? ' active' : '');
+    if (dotB) dotB.className = 'dot black' + (turn === 'b' && status === 'playing' || status === 'check' && turn === 'b' ? ' active' : '');
+
+    if (status === 'checkmate') {
+      const winner = turn === 'w' ? 'Black' : 'White';
+      if (gameOverMsg) gameOverMsg.textContent = `Checkmate — ${winner} wins!`;
+      if (gameOverMsg) gameOverMsg.style.display = 'block';
+      if (dotW) dotW.className = 'dot white';
+      if (dotB) dotB.className = 'dot black';
+    } else if(status === 'stalemate') {
+      if (gameOverMsg) gameOverMsg.textContent = 'Stalemate — Draw!';
+      if (gameOverMsg) gameOverMsg.style.display = 'block';
+    } else if(status === 'check') {
+      if (gameOverMsg) gameOverMsg.style.display = 'none';
+      if(turn==='w') if (dotW) dotW.className = 'dot white active';
+      else if (dotB) dotB.className = 'dot black active';
+    } else {
+      if (gameOverMsg) gameOverMsg.style.display = 'none';
+    }
+  }
+
+  renderMoveHistory() {
+    const hist = this.moveHistory$();
+    const el = document.getElementById('moveHistory');
+    if (el) el.innerHTML = '';
+    hist.forEach((pair: any, i: any) => {
+      const row = document.createElement('div');
+      row.className = 'move-pair';
+      row.innerHTML = `<span class="move-num">${i + 1}.</span><span class="move-w">${pair.w || ''}</span><span class="move-b">${pair.b || ''}</span>`;
+      if (el) el.appendChild(row);
+    });
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
   render() {
     this.renderBoard();
+    this.renderStatus();
+    this.renderMoveHistory();
   }
 
   /* Interaction */
