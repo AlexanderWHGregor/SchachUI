@@ -341,6 +341,11 @@ export class App implements OnInit {
     }
   }
 
+  renderCaptured() {
+    document.getElementById('capturedByWhite')!.textContent=this.capturedW$().map((p: string | number)=>this.PIECES[p as keyof typeof this.PIECES]).join('');
+    document.getElementById('capturedByBlack')!.textContent=this.capturedB$().map((p: string | number)=>this.PIECES[p as keyof typeof this.PIECES]).join('');
+  }
+
   renderMoveHistory() {
     const hist = this.moveHistory$();
     const el = document.getElementById('moveHistory');
@@ -357,6 +362,7 @@ export class App implements OnInit {
   render() {
     this.renderBoard();
     this.renderStatus();
+    this.renderCaptured();
     this.renderMoveHistory();
   }
 
