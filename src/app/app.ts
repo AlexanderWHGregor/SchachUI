@@ -495,4 +495,41 @@ export class App implements OnInit {
   hidePromoModal() {
     document.getElementById('promoModal')!.style.display = 'none';
   }
+
+  /* Controls */
+  undoMove() {
+    const hist = this.boardHistory$();
+    if(!hist.length) return;
+    const prev = hist[hist.length - 1];
+    this.boardHistory$.update((h: string | any[]) => h.slice(0, -1));
+    this.board$.set([...prev.board]);
+    this.turn$.set(prev.turn);
+    this.enPassant$.set(prev.ep);
+    this.castleRights$.set({...prev.castle});
+    this.capturedW$.set([...prev.capturedW]);
+    this.capturedB$.set([...prev.capturedB]);
+    this.moveHistory$.set([...prev.moveHistory]);
+    this.lastMove$.set(prev.lastMove);
+    this.status$.set(prev.status);
+    this.selected$.set(null);
+    this.legalMoves$.set([]);
+    this.render();
+  }
+
+  newGame() {
+    this.board$.set([...this.INIT_BOARD]);
+    this.turn$.set('w');
+    this.selected$.set(null);
+    this.legalMoves$.set([]);
+    this.lastMove$.set(null);
+    this.status$.set('playing');
+    this.moveHistory$.set([]);
+    this.capturedW$.set([]);
+    this.capturedB$.set([]);
+    this.boardHistory$.set([]);
+    this.castleRights$.set({wK:true, wQ:true, bK:true, bQ:true});
+    this.enPassant$.set(null);
+    this.hidePromoModal();
+    this.render();
+  }
 }
