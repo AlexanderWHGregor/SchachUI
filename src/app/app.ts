@@ -20,14 +20,14 @@ export class App implements OnInit {
   };
 
   readonly INIT_BOARD = [
-    'bR','bN','bB','bQ','bK','bB','bN','bR',
-    'bP','bP','bP','bP','bP','bP','bP','bP',
-    null,null,null,null,null,null,null,null,
-    null,null,null,null,null,null,null,null,
-    null,null,null,null,null,null,null,null,
-    null,null,null,null,null,null,null,null,
-    'wP','wP','wP','wP','wP','wP','wP','wP',
     'wR','wN','wB','wQ','wK','wB','wN','wR',
+    'wP','wP','wP','wP','wP','wP','wP','wP',
+    null,null,null,null,null,null,null,null,
+    null,null,null,null,null,null,null,null,
+    null,null,null,null,null,null,null,null,
+    null,null,null,null,null,null,null,null,
+    'bP','bP','bP','bP','bP','bP','bP','bP',
+    'bR','bN','bB','bQ','bK','bB','bN','bR',
   ];
 
   signal(initVal: any) {
@@ -103,7 +103,7 @@ export class App implements OnInit {
     else if(t === 'K') {
       step([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1],[-1, -1]]);
       // Castling
-      const baseRow = c === 'w' ? 7 : 0;
+      const baseRow = c === 'w' ? 0 : 7;
       if(this.row(i) === baseRow && this.col(i) === 4) {
         if(castle[c + 'K'] && !board[this.idx(baseRow, 5)] && !board[this.idx(baseRow, 6)])
           moves.push(this.idx(baseRow, 6));
@@ -112,8 +112,8 @@ export class App implements OnInit {
       }
     }
     else if(t === 'P') {
-      const dir = c === 'w' ? -1 : 1;
-      const startRow = c === 'w' ? 6 : 1;
+      const dir = c === 'w' ? 1 : -1;
+      const startRow = c === 'w' ? 1 : 6;
       const r1 = this.row(i) + dir, r2 = this.row(i) + 2 * dir;
       if(r1 >= 0 && r1 < 8) {
         if(!board[this.idx(r1, this.col(i))]) {
@@ -155,13 +155,13 @@ export class App implements OnInit {
 
       // En passant capture
       if(t === 'P' && to === ep && !nb[to]) {
-        const capRow = c === 'w' ? this.row(to) + 1 : this.row(to) - 1;
+        const capRow = c === 'w' ? this.row(to) - 1 : this.row(to) + 1;
         nb[this.idx(capRow, this.col(to))] = null;
       }
 
       // Castling — check intermediate squares
       if(t === 'K') {
-        const baseRow = c === 'w' ? 7 : 0;
+        const baseRow = c === 'w' ? 0 : 7;
         if(this.row(from) === baseRow && this.col(from) === 4 && Math.abs(this.col(to) - 4) === 2) {
           // must not be in check, or pass through check
           if(this.isAttacked(from, c === 'w' ? 'b' : 'w', board)) return false;
@@ -208,7 +208,7 @@ export class App implements OnInit {
 
     // En passant
     if(t === 'P' && to === ep && !board[to]) {
-      const capRow = c === 'w' ? this.row(to) + 1 : this.row(to) - 1;
+      const capRow = c === 'w' ? this.row(to) - 1 : this.row(to) + 1;
       const capIdx = this.idx(capRow, this.col(to));
       captured = board[capIdx];
       board[capIdx] = null;
@@ -216,7 +216,7 @@ export class App implements OnInit {
 
     // Castling — move rook
     if(t === 'K' && Math.abs(this.col(to) - this.col(from)) === 2) {
-      const baseRow = c === 'w' ? 7 : 0;
+      const baseRow = c === 'w' ? 0 : 7;
       const rookFrom = this.col(to) === 6 ? this.idx(baseRow, 7) : this.idx(baseRow, 0);
       const rookTo = this.col(to) === 6 ? this.idx(baseRow, 5) : this.idx(baseRow, 3);
       board[rookTo] = board[rookFrom];
@@ -230,10 +230,10 @@ export class App implements OnInit {
     // Update castle rights
     if(t === 'K') { castle[c + 'K'] = false; castle[c + 'Q'] = false; }
     if(t === 'R') {
-      if(from === this.idx(7, 0)) castle['wQ'] = false;
-      if(from === this.idx(7, 7)) castle['wK'] = false;
-      if(from === this.idx(0, 0)) castle['bQ'] = false;
-      if(from === this.idx(0,7)) castle['bK'] = false;
+      if(from === this.idx(0, 0)) castle['wQ'] = false;
+      if(from === this.idx(0, 7)) castle['wK'] = false;
+      if(from === this.idx(7, 0)) castle['bQ'] = false;
+      if(from === this.idx(7, 7)) castle['bK'] = false;
     }
 
     // En passant target
@@ -373,9 +373,12 @@ export class App implements OnInit {
     const status = this.status$();
     if(status === 'checkmate' || status === 'stalemate') return;
 
+    const turn = this.turn$();
+    // Human only controls Black
+    if(turn === 'w') return;
+
     const sel = this.selected$();
     const board = this.board$();
-    const turn = this.turn$();
     const legal = this.legalMoves$();
 
     if(sel !== null && legal.includes(i)) {
@@ -402,7 +405,7 @@ export class App implements OnInit {
     const t = this.type(p);
 
     // Pawn promotion
-    if(t === 'P' && (this.row(to) === 0 || this.row(to) === 7) && !promoType) {
+    if(t === 'P' && (this.row(to) === 7 || this.row(to) === 0) && !promoType) {
       this.pendingPromo = {from, to};
       this.showPromoModal(turn);
       return;
@@ -494,6 +497,180 @@ export class App implements OnInit {
 
   hidePromoModal() {
     document.getElementById('promoModal')!.style.display = 'none';
+  }
+
+  /* AI (White) */
+  /* Piece-square tables give the AI positional awareness */
+  readonly PST: Record<string, number[]> = {
+    P: [
+       0,  0,  0,  0,  0,  0,  0,  0,
+      50, 50, 50, 50, 50, 50, 50, 50,
+      10, 10, 20, 30, 30, 20, 10, 10,
+       5,  5, 10, 25, 25, 10,  5,  5,
+       0,  0,  0, 20, 20,  0,  0,  0,
+       5, -5,-10,  0,  0,-10, -5,  5,
+       5, 10, 10,-20,-20, 10, 10,  5,
+       0,  0,  0,  0,  0,  0,  0,  0,
+    ],
+    N: [
+      -50,-40,-30,-30,-30,-30,-40,-50,
+      -40,-20,  0,  0,  0,  0,-20,-40,
+      -30,  0, 10, 15, 15, 10,  0,-30,
+      -30,  5, 15, 20, 20, 15,  5,-30,
+      -30,  0, 15, 20, 20, 15,  0,-30,
+      -30,  5, 10, 15, 15, 10,  5,-30,
+      -40,-20,  0,  5,  5,  0,-20,-40,
+      -50,-40,-30,-30,-30,-30,-40,-50,
+    ],
+    B: [
+      -20,-10,-10,-10,-10,-10,-10,-20,
+      -10,  0,  0,  0,  0,  0,  0,-10,
+      -10,  0,  5, 10, 10,  5,  0,-10,
+      -10,  5,  5, 10, 10,  5,  5,-10,
+      -10,  0, 10, 10, 10, 10,  0,-10,
+      -10, 10, 10, 10, 10, 10, 10,-10,
+      -10,  5,  0,  0,  0,  0,  5,-10,
+      -20,-10,-10,-10,-10,-10,-10,-20,
+    ],
+    R: [
+       0,  0,  0,  0,  0,  0,  0,  0,
+       5, 10, 10, 10, 10, 10, 10,  5,
+      -5,  0,  0,  0,  0,  0,  0, -5,
+      -5,  0,  0,  0,  0,  0,  0, -5,
+      -5,  0,  0,  0,  0,  0,  0, -5,
+      -5,  0,  0,  0,  0,  0,  0, -5,
+      -5,  0,  0,  0,  0,  0,  0, -5,
+       0,  0,  0,  5,  5,  0,  0,  0,
+    ],
+    Q: [
+      -20,-10,-10, -5, -5,-10,-10,-20,
+      -10,  0,  0,  0,  0,  0,  0,-10,
+      -10,  0,  5,  5,  5,  5,  0,-10,
+       -5,  0,  5,  5,  5,  5,  0, -5,
+        0,  0,  5,  5,  5,  5,  0, -5,
+      -10,  5,  5,  5,  5,  5,  0,-10,
+      -10,  0,  5,  0,  0,  0,  0,-10,
+      -20,-10,-10, -5, -5,-10,-10,-20,
+    ],
+    K: [
+      -30,-40,-40,-50,-50,-40,-40,-30,
+      -30,-40,-40,-50,-50,-40,-40,-30,
+      -30,-40,-40,-50,-50,-40,-40,-30,
+      -30,-40,-40,-50,-50,-40,-40,-30,
+      -20,-30,-30,-40,-40,-30,-30,-20,
+      -10,-20,-20,-20,-20,-20,-20,-10,
+       20, 20,  0,  0,  0,  0, 20, 20,
+       20, 30, 10,  0,  0, 10, 30, 20,
+    ],
+  };
+
+  readonly PIECE_VALUES: Record<string, number> = {
+    P: 100, N: 320, B: 330, R: 500, Q: 900, K: 20000,
+  };
+
+  /** Static evaluation: positive = good for White */
+  evaluate(board: any[]): number {
+    let score = 0;
+    for (let i = 0; i < 64; i++) {
+      const p = board[i];
+      if (!p) continue;
+      const c = this.color(p), t = this.type(p) as string;
+      const val = this.PIECE_VALUES[t] ?? 0;
+      // PST index: white reads top-to-bottom (row 0 = rank 8), black mirrors
+      const pstIdx = c === 'w' ? (7 - this.row(i)) * 8 + this.col(i) : i;
+      const pst = (this.PST[t] ?? [])[pstIdx] ?? 0;
+      score += c === 'w' ? val + pst : -(val + pst);
+    }
+    return score;
+  }
+
+  /** Minimax with alpha-beta pruning (depth 3) */
+  minimax(
+    board: any[], turn: string, ep: any, castle: any,
+    depth: number, alpha: number, beta: number, maximizing: boolean
+  ): number {
+    if (depth === 0) return this.evaluate(board);
+
+    const allMoves: [number, number][] = [];
+    for (let i = 0; i < 64; i++) {
+      if (this.color(board[i]) === turn) {
+        for (const to of this.getLegalMoves(i, board, turn, ep, castle)) {
+          allMoves.push([i, to]);
+        }
+      }
+    }
+
+    if (allMoves.length === 0) {
+      const kingIdx = this.findKing(board, turn);
+      const opp = turn === 'w' ? 'b' : 'w';
+      return this.isAttacked(kingIdx, opp, board)
+        ? (maximizing ? -100000 - depth : 100000 + depth)
+        : 0; // stalemate
+    }
+
+    const next = turn === 'w' ? 'b' : 'w';
+    if (maximizing) {
+      let best = -Infinity;
+      for (const [from, to] of allMoves) {
+        const { board: nb, castle: nc, newEp } = this.applyMove_pure(from, to, null, board, castle, ep, turn);
+        best = Math.max(best, this.minimax(nb, next, newEp, nc, depth - 1, alpha, beta, false));
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (const [from, to] of allMoves) {
+        const { board: nb, castle: nc, newEp } = this.applyMove_pure(from, to, null, board, castle, ep, turn);
+        best = Math.min(best, this.minimax(nb, next, newEp, nc, depth - 1, alpha, beta, true));
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    }
+  }
+
+  /** Pure (stateless) version of applyMove for use inside minimax */
+  applyMove_pure(from: number, to: number, promoType: any, board: any[], castle: any, ep: any, turn: string) {
+    const nb = [...board];
+    const p = nb[from];
+    const c = this.color(p), t = this.type(p);
+    const nc = { ...castle };
+    let newEp: any = null;
+
+    // En passant capture
+    if (t === 'P' && to === ep && !nb[to]) {
+      const capRow = c === 'w' ? this.row(to) - 1 : this.row(to) + 1;
+      nb[this.idx(capRow, this.col(to))] = null;
+    }
+
+    // Castling — move rook
+    if (t === 'K' && Math.abs(this.col(to) - this.col(from)) === 2) {
+      const baseRow = c === 'w' ? 0 : 7;
+      const rookFrom = this.col(to) === 6 ? this.idx(baseRow, 7) : this.idx(baseRow, 0);
+      const rookTo   = this.col(to) === 6 ? this.idx(baseRow, 5) : this.idx(baseRow, 3);
+      nb[rookTo] = nb[rookFrom];
+      nb[rookFrom] = null;
+    }
+
+    // Promotion (auto-queen for AI)
+    nb[to]   = (t === 'P' && (this.row(to) === 7 || this.row(to) === 0))
+               ? c + (promoType ?? 'Q')
+               : nb[from];
+    nb[from] = null;
+
+    // Castle rights
+    if (t === 'K') { nc[c + 'K'] = false; nc[c + 'Q'] = false; }
+    if (t === 'R') {
+      if (from === this.idx(0, 0)) nc['wQ'] = false;
+      if (from === this.idx(0, 7)) nc['wK'] = false;
+      if (from === this.idx(7, 0)) nc['bQ'] = false;
+      if (from === this.idx(7, 7)) nc['bK'] = false;
+    }
+    if (t === 'P' && Math.abs(this.row(to) - this.row(from)) === 2) {
+      newEp = this.idx((this.row(from) + this.row(to)) / 2, this.col(from));
+    }
+    return { board: nb, castle: nc, newEp };
   }
 
   /* Controls */
