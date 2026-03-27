@@ -11,6 +11,8 @@ export class App implements OnInit {
   ngOnInit(): void {
     this.renderLabels();
     this.render();
+    // White is AI — make the opening move
+    setTimeout(() => this.triggerAiMove(), 400);
   }
 
   /* Piece constants */
@@ -467,6 +469,11 @@ export class App implements OnInit {
     }
 
     this.render();
+
+    // If it is now White's turn and the game is still going, schedule AI move
+    if (next === 'w' && this.status$() !== 'checkmate' && this.status$() !== 'stalemate') {
+      setTimeout(() => this.triggerAiMove(), 300);
+    }
   }
 
   getAllLegalMoves(board: any, turn: any, ep: any, castle: any) {
@@ -654,9 +661,7 @@ export class App implements OnInit {
     }
 
     // Promotion (auto-queen for AI)
-    nb[to]   = (t === 'P' && (this.row(to) === 7 || this.row(to) === 0))
-               ? c + (promoType ?? 'Q')
-               : nb[from];
+    nb[to] = (t === 'P' && (this.row(to) === 7 || this.row(to) === 0)) ? c + (promoType ?? 'Q') : nb[from];
     nb[from] = null;
 
     // Castle rights
@@ -671,6 +676,37 @@ export class App implements OnInit {
       newEp = this.idx((this.row(from) + this.row(to)) / 2, this.col(from));
     }
     return { board: nb, castle: nc, newEp };
+  }
+
+  /** Pick the best move for White and execute it */
+  triggerAiMove() {
+    const status = this.status$();
+    if (status === 'checkmate' || status === 'stalemate') return;
+    if (this.turn$() !== 'w') return;
+
+    const board = this.board$();
+    const ep = this.enPassant$();
+    const castle = this.castleRights$();
+    const DEPTH = 3;
+
+    let bestScore = -Infinity;
+    let bestMove: [number, number] | null = null;
+
+    for (let i = 0; i < 64; i++) {
+      if (this.color(board[i]) !== 'w') continue;
+      for (const to of this.getLegalMoves(i, board, 'w', ep, castle)) {
+        const { board: nb, castle: nc, newEp } = this.applyMove_pure(i, to, null, board, castle, ep, 'w');
+        const score = this.minimax(nb, 'b', newEp, nc, DEPTH - 1, -Infinity, Infinity, false);
+        if (score > bestScore) { bestScore = score; bestMove = [i, to]; }
+      }
+    }
+
+    if (bestMove) {
+      const [from, to] = bestMove;
+      const p = board[from];
+      const isPromo = this.type(p) === 'P' && (this.row(to) === 0 || this.row(to) === 7);
+      this.doMove(from, to, isPromo ? 'Q' : null);
+    }
   }
 
   /* Controls */
@@ -708,5 +744,7 @@ export class App implements OnInit {
     this.enPassant$.set(null);
     this.hidePromoModal();
     this.render();
+    // White (AI) plays first move
+    setTimeout(() => this.triggerAiMove(), 400);
   }
 }
