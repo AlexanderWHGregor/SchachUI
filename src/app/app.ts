@@ -712,9 +712,12 @@ export class App implements OnInit {
   /* Controls */
   undoMove() {
     const hist = this.boardHistory$();
-    if(!hist.length) return;
-    const prev = hist[hist.length - 1];
-    this.boardHistory$.update((h: string | any[]) => h.slice(0, -1));
+    // Pop two half-moves: Black's move + White AI's move before it
+    // (so the human is always back to their own turn)
+    const stepsBack = hist.length >= 2 ? 2 : hist.length;
+    if (!stepsBack) return;
+    const prev = hist[hist.length - stepsBack];
+    this.boardHistory$.update((h: string | any[]) => h.slice(0, -stepsBack));
     this.board$.set([...prev.board]);
     this.turn$.set(prev.turn);
     this.enPassant$.set(prev.ep);
