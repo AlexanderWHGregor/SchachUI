@@ -199,7 +199,9 @@ function sameSquares(a: number[], b: number[]): boolean {
          JSON.stringify([...b].sort((x,y)=>x-y));
 }
 
-/* Coordinate helpers */
+/* Tests */
+
+/* 1. Coordinate helpers */
 
 describe('Coordinate helpers', () => {
   test('idx converts row/col to flat index', () => {
@@ -233,5 +235,40 @@ describe('Coordinate helpers', () => {
     expect(g.type('wK')).toBe('K');
     expect(g.type('bP')).toBe('P');
     expect(g.type(null)).toBe(null);
+  });
+});
+
+/* 2. INIT_BOARD layout */
+
+describe('INIT_BOARD layout (flipped: White row 0, Black row 7)', () => {
+  const b = g.INIT_BOARD;
+
+  test('has 64 squares', () => expect(b).toHaveLength(64));
+
+  test('White back rank is row 0', () => {
+    expect(b[g.idx(0,0)]).toBe('wR');
+    expect(b[g.idx(0,1)]).toBe('wN');
+    expect(b[g.idx(0,4)]).toBe('wK');
+    expect(b[g.idx(0,7)]).toBe('wR');
+  });
+
+  test('White pawns are on row 1', () => {
+    for (let c = 0; c < 8; c++) expect(b[g.idx(1,c)]).toBe('wP');
+  });
+
+  test('Black pawns are on row 6', () => {
+    for (let c = 0; c < 8; c++) expect(b[g.idx(6,c)]).toBe('bP');
+  });
+
+  test('Black back rank is row 7', () => {
+    expect(b[g.idx(7,0)]).toBe('bR');
+    expect(b[g.idx(7,4)]).toBe('bK');
+    expect(b[g.idx(7,7)]).toBe('bR');
+  });
+
+  test('rows 2–5 are empty', () => {
+    for (let r = 2; r <= 5; r++)
+      for (let c = 0; c < 8; c++)
+        expect(b[g.idx(r,c)]).toBeNull();
   });
 });
