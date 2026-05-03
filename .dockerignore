@@ -1,0 +1,32 @@
+# Keeps the Docker build context lean
+# Excludes files the daemon doesn't need or files that get regenerated inside the container
+
+# Dependencies (reinstalled inside the build stage via npm ci)
+node_modules/
+
+# Angular compiler output (rebuilt inside the build stage)
+dist/
+
+# Test artefacts
+coverage/
+*.spec.ts
+
+# Version control
+.git/
+.gitignore
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Docker files themselves (no need to COPY them into the image)
+Dockerfile
+.dockerignore
+# nginx.conf
+
+# CI / environment
+.env
+.env.*
+*.log
